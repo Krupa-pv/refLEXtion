@@ -11,7 +11,8 @@ import 'package:flutter/material.dart';
 class SpeechServices {
   
   String simulator = "localhost";
-  final String _baseUrl = "http://localhost:5250";
+  //final String _baseUrl = "http://localhost:5250";
+  final String _baseUrl = "http://192.168.1.105:5250";
   Future<bool> CheckConnection() async {
 
 
