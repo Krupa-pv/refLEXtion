@@ -32,8 +32,7 @@ public class TestController : ControllerBase
     public IActionResult Ping()
     {
         
-        _logger.LogInformation("Flutter connecton");
-
+        Console.WriteLine("made it to the back ayyyyy");
         
         return Ok(new
         {

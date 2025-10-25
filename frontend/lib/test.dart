@@ -1,13 +1,10 @@
 
 
-
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'dart:io';
 
 
 
@@ -16,6 +13,8 @@ class SpeechServices {
   String simulator = "localhost";
   final String _baseUrl = "http://localhost:5250";
   Future<bool> CheckConnection() async {
+
+
     final String apiUrl = '$_baseUrl/api/test';
 
     try {
