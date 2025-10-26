@@ -43,6 +43,7 @@ dependencies:
   permission_handler: ^12.0.1
   record: ^6.1.2
   audioplayers: ^6.5.1
+  onnxruntime: ^1.4.1
   just_audio: ^0.10.5
   webview_flutter: ^4.13.0
 
@@ -69,6 +70,9 @@ flutter:
   uses-material-design: true
   assets:
       - assets/logo.png
+      - assets/models/mappings/class_label_map.json
+      - assets/models/mappings/label_feedback_map.json
+      - assets/models/phoneme_models/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

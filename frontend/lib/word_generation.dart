@@ -2,7 +2,7 @@ import 'dart:math';
 
 class WordGeneration {
 
-  final List<String> wordSet = ['apple', 'banana', 'cherry', 'dandelion', 'elephant'];
+  final List<String> wordSet = [ 'boot'];
 
   String generate_word(){
 

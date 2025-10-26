@@ -1,6 +1,7 @@
 import json
 import os
 import glob
+import uuid
 import pandas as pd
 import math 
 
@@ -131,23 +132,30 @@ def extract_frame_features_single(frame_dict, prev_feats=None):
     }
 
 def explode_attempts_to_frames(df: pd.DataFrame) -> pd.DataFrame:
-    all_rows = []
+    rows = []
     for _, row in df.iterrows():
         phoneme = row["phoneme"]
         label = row["quality_label"]
         frames = row["frames"]
+
+        # make a stable unique attempt_id for this attempt
+        attempt_id = str(uuid.uuid4())
+
         prev_feats = None
         for frame_dict in frames:
-            feats = extract_frame_features_single(frame_dict, prev_feats)
+            feats = extract_frame_features_single(frame_dict, prev_feats=prev_feats)
             if feats is None:
                 continue
-            all_rows.append({
+
+            rows.append({
+                "attempt_id": attempt_id,
                 "phoneme": phoneme,
                 "class_label": label,
                 **feats
             })
             prev_feats = feats
-    return pd.DataFrame(all_rows)
+
+    return pd.DataFrame(rows)
 
 
 #extract features

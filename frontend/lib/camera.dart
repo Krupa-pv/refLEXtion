@@ -1,5 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/phoneme_classifier.dart';
 import 'package:frontend/speech_models.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'dart:io';
@@ -27,29 +28,39 @@ class _CameraPageState extends State<CameraPage> {
   final tts = TTSService();
   final _speechController = SpeechController();
   final SpeechServices _speechService = SpeechServices();
-
+  final PhonemeQualityModel _model = PhonemeQualityModel();
 
   late CameraController controller;
   late List<CameraDescription> _cameras;
+
   WordGeneration word_generator = WordGeneration();
+
   bool _isCameraInitialized = false;
   bool _isStreaming = false;
   bool _isProcessingFrame = false;
   bool _isLoading = false;
 
+  bool _isPhoneme = false;         
+  String lastPhoneme = "";
 
-
-  bool canRetry() => attemptCount < 3;
-  int attemptCount = 1;
-  String? _displayText;
   int _stars = 0;
-
-
-  late String current_word;
+  String? _displayText;
+  String current_word = "";
 
   late FaceDetector _faceDetector;
-  List<Map<String, dynamic>> _frames = [];
+
+  final List<Map<String, dynamic>> _frames = [];
   int _frameIndex = 0;
+
+  String? _lastRecordingJson;
+
+  int wordAttemptCount = 1;        // how many times the current word has been attempted
+  int phonemeAttemptCount = 0;     // attempts for the current phoneme practice
+
+  
+  bool get canRetryWord => wordAttemptCount < 3;
+  
+  bool get canRetryPhoneme => phonemeAttemptCount < 1;
 
   @override
   void initState() {
@@ -188,8 +199,10 @@ class _CameraPageState extends State<CameraPage> {
                   onPressed: !_isStreaming
                       ? null
                       : () async {
-                          await onStopClicked();
-                           _stopStream();
+                           final jsonfile = await _stopStream();
+                           _lastRecordingJson = jsonfile;
+                           await onStopClicked();
+                           
                         },
                   child: const Text('Stop Stream'),
                 ),
@@ -219,7 +232,7 @@ class _CameraPageState extends State<CameraPage> {
       _isProcessingFrame = true;
 
       try {
-        // Convert CameraImage → InputImage
+        // Convert CameraImage -> InputImage
         final inputImage = _convertToInputImage(image, controller.description.sensorOrientation);
 
         // Run face detection
@@ -273,8 +286,10 @@ class _CameraPageState extends State<CameraPage> {
     });
   }
 
-  void _stopStream() async {
-    if (!_isStreaming) return;
+  Future<String> _stopStream() async {
+    if (!_isStreaming){
+      return "";
+    }
     await controller.stopImageStream();
     setState(() => _isStreaming = false);
 
@@ -282,15 +297,15 @@ class _CameraPageState extends State<CameraPage> {
     final dir = await getApplicationDocumentsDirectory();
     final filePath = '${dir.path}/mouth_data.jsonl';
     final file = File(filePath);
-
+    var contents = "";
     // Wrap frames in a "frame" field and write as a single JSON object
     final wrappedFrames = {'frame': _frames};
     await file.writeAsString(jsonEncode(wrappedFrames));
 
-    debugPrint('✅ Saved ${_frames.length} frames to $filePath');
+    debugPrint('Saved ${_frames.length} frames to $filePath');
 
     if (await file.exists()) {
-      final contents = await file.readAsString();
+      contents = await file.readAsString();
       debugPrint('Current JSONL contents:\n$contents');
     } else {
       debugPrint('JSONL file not found yet.');
@@ -299,6 +314,8 @@ class _CameraPageState extends State<CameraPage> {
     // Optional: clear memory after saving
     _frames.clear();
     _frameIndex = 0;
+
+    return contents;
   }
 
   InputImage _convertToInputImage(CameraImage image, int rotation) {
@@ -315,66 +332,132 @@ class _CameraPageState extends State<CameraPage> {
     );
   }
 
-  Future <void> onStartClicked() async{
-    /*
-    if(current_word==null){
-      throw ArgumentError.notNull("current word is null");
+  Future<void> onStartClicked() async {
+    if (!_isPhoneme) {
+      // starting word-level ASR grading
+      await _speechController.onStartClicked(current_word, context);
+    } else {
+      // already in phoneme practice mode
+      // could play prompt like "Say /p/ again"
+      await _speechService.playTts("Say $lastPhoneme");
     }
-    */
-    await _speechController.onStartClicked(current_word, context);
-
   }
 
   Future<void> onStopClicked() async {
-    debugPrint("atlease we be calling the method");
+    debugPrint("calling onStopClicked()");
     setState(() {
-      _isLoading =true;
+      _isLoading = true;
     });
-   var result = await _speechController.onStopClicked(current_word, GradingLevel.Phoneme);
-    List<WordAssessment>? wordsData = result?.words;
-    String? lastPhenome;
+
+    final result =
+        await _speechController.onStopClicked(current_word, GradingLevel.Phoneme);
+
+    final wordsData = result?.words;
 
     if (wordsData != null) {
       for (var word in wordsData) {
         debugPrint('Word: ${word.word}');
-        for (var p in word.phonemes){
+        double min = 10000;
+        for (var p in word.phonemes) {
           debugPrint('Phoneme: ${p.phoneme}, Accuracy: ${p.accuracyScore}');
-          lastPhenome = p.phoneme;
+          if (p.accuracyScore<min){
+            lastPhoneme = p.phoneme;
+            min = p.accuracyScore;
+            _isPhoneme = true;
+          }
         }
       }
-      
 
+      // if in phoneme mode, run visual mouth model now
+      if (_isPhoneme) {
+        await _handlePhonemeEvaluation();
+      }
     } else {
       debugPrint('No words data available');
     }
 
+    final double? accuracy = result?.accuracyScore;
 
-    double? accuracy = result?.accuracyScore;
     setState(() {
-      _isLoading =false;
+      _isLoading = false;
     });
-    if(accuracy==null){
-      throw ArgumentError.notNull("result is null");
+
+    if (accuracy == null) {
+      debugPrint("accuracyScore null in result");
+      return;
     }
-    if (accuracy < 60) {
-      if(!canRetry()){
-        await speakAndShow("Let's try a different word!");
-        moveToNextWord();
-        return;
+
+    if (_isPhoneme) {
+      // phoneme branch already handled in _handlePhonemeEvaluation
+      return;
+    } else {
+      await _handleWordEvaluation(accuracy);
+    }
+  }
+
+  // word mode result logic
+  Future<void> _handleWordEvaluation(double accuracy) async {
+    if (accuracy < 80) {
+      // word not good enough -> enter phoneme mode
+      if (lastPhoneme.isNotEmpty) {
+        phonemeAttemptCount = 0;
+        _isPhoneme = true;
+
+        //await speakAndShow("Let's practice the sound $lastPhoneme.");
+        await _speechService.playTts("Say $lastPhoneme");
       }
-      await speakAndShow("Hmm, not quite. Let's learn this word!");
-      incrementAttempt();
-      if (lastPhenome != null){
-        await _speechService.playTts(lastPhenome);
-      }
-      
+
+      wordAttemptCount += 1;
+      return;
     }
-    else {
-      setStar(3);
-      await speakAndShow("Great job! You said the word correctly."!);
-      setStar(0);
-      moveToNextWord();
+
+    // success at word level
+    setStar(3);
+    await speakAndShow("Great job! You said the word correctly.");
+    setStar(0);
+
+    _advanceToNextWord();
+  }
+
+  // phoneme mode result logic
+  Future<void> _handlePhonemeEvaluation() async {
+    if (lastPhoneme.isEmpty) {
+      debugPrint("No lastPhoneme set, can't phoneme-eval");
+      return;
     }
+
+    if (_lastRecordingJson != null) {
+      await _model.loadModel(lastPhoneme);
+
+      final feedback = await _model.getPhonemeFeedback(_lastRecordingJson!);
+      debugPrint("visual feedback for $lastPhoneme: $feedback");
+      await speakAndShow(feedback);
+    } else {
+      debugPrint("no _lastRecordingJson available for phoneme eval");
+    }
+
+    phonemeAttemptCount += 1;
+
+    if (!canRetryPhoneme) {
+      _finishPhonemeAndAdvance();
+    } else {
+      await _speechService.playTts("Try $lastPhoneme again.");
+    }
+  }
+
+  void _finishPhonemeAndAdvance() {
+    setStar(0);
+    _isPhoneme = false;
+    _advanceToNextWord();
+  }
+
+  void _advanceToNextWord() {
+    setState(() {
+      wordAttemptCount = 1;
+      phonemeAttemptCount = 0;
+      _isPhoneme = false;
+      current_word = word_generator.generate_word();
+    });
   }
 
   Future<void> speakAndShow(String text) async {
@@ -382,34 +465,18 @@ class _CameraPageState extends State<CameraPage> {
       _displayText = text;
     });
 
-    await tts.speakAndWait(text); // your TTS service call
+    await tts.speakAndWait(text);
 
-    if (mounted) {
-      setState(() {
-        _displayText = null;
-      });
-    }
-  }
+    if (!mounted) return;
 
-  void moveToNextWord() {
     setState(() {
-      attemptCount = 1;
-      current_word = word_generator.generate_word();
-  });
-
-  }
-
-  void incrementAttempt() {
-    setState(() {
-      attemptCount++;
+      _displayText = null;
     });
   }
 
-  void setStar(int stars){
-      setState(() {
-        _stars = stars;
-      });
-   }
-
+  void setStar(int stars) {
+    setState(() {
+      _stars = stars;
+    });
+  }
 }
-
