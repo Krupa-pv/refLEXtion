@@ -1,9 +1,19 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/speech_models.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
+import 'word_generation.dart';
+import 'tts.dart';
+import 'speech_controller.dart';
+import 'PA.dart';
+import 'star.dart';
+import 'speech_services.dart';
+
+
+
 
 
 class CameraPage extends StatefulWidget {
@@ -14,11 +24,28 @@ class CameraPage extends StatefulWidget {
 }
 
 class _CameraPageState extends State<CameraPage> {
+  final tts = TTSService();
+  final _speechController = SpeechController();
+  final SpeechServices _speechService = SpeechServices();
+
+
   late CameraController controller;
   late List<CameraDescription> _cameras;
+  WordGeneration word_generator = WordGeneration();
   bool _isCameraInitialized = false;
   bool _isStreaming = false;
   bool _isProcessingFrame = false;
+  bool _isLoading = false;
+
+
+
+  bool canRetry() => attemptCount < 3;
+  int attemptCount = 1;
+  String? _displayText;
+  int _stars = 0;
+
+
+  late String current_word;
 
   late FaceDetector _faceDetector;
   List<Map<String, dynamic>> _frames = [];
@@ -29,7 +56,8 @@ class _CameraPageState extends State<CameraPage> {
     super.initState();
     _initializeCamera();
     _initFaceDetector();
-  }
+    current_word = word_generator.generate_word();
+    }
 
   Future<void> _initializeCamera() async {
     _cameras = await availableCameras();
@@ -46,6 +74,9 @@ class _CameraPageState extends State<CameraPage> {
       setState(() {
         _isCameraInitialized = true;
       });
+
+      tts.speak("Say $current_word!");
+
     } catch (e) {
       if (e is CameraException) {
         // Handle errors like access denied
@@ -71,6 +102,46 @@ class _CameraPageState extends State<CameraPage> {
 
   @override
   Widget build(BuildContext context) {
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (_displayText != null) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Stars at the top based on _stars
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(3, (index) {
+                  // _stars is your state variable (0-3)
+                  bool visible = index < (_stars ?? 0); 
+                  return AnimatedStar(visible: visible);
+                }),
+              ),
+              const SizedBox(height: 12),
+              // The main text
+              Text(_displayText!),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _displayText = null; // hide popup
+                });
+                Navigator.of(context).pop();
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    }
+  });
+
     if (!_isCameraInitialized) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -79,29 +150,61 @@ class _CameraPageState extends State<CameraPage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Front Camera Stream')),
-      body: Stack(
-        alignment: Alignment.bottomCenter,
+      body: Stack(children: [Column(
         children: [
-          CameraPreview(controller),
+          // Large word label at the top
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: Text(
+              current_word,
+              style: TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ),
+
+          // Camera preview expands to fill remaining space
+          Expanded(
+            child: CameraPreview(controller),
+          ),
+
+          // Bottom buttons
           Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton(
-                  onPressed: _isStreaming ? null : _startStream,
+                  onPressed: _isStreaming ? null : () async{
+                    _startStream();
+                    await onStartClicked();
+                  },
                   child: const Text('Start Stream'),
                 ),
                 const SizedBox(width: 20),
                 ElevatedButton(
-                  onPressed: _isStreaming ? _stopStream : null,
+                  onPressed: !_isStreaming
+                      ? null
+                      : () async {
+                          await onStopClicked();
+                           _stopStream();
+                        },
                   child: const Text('Stop Stream'),
                 ),
               ],
             ),
           ),
         ],
-      ),
+      ), if (_isLoading)
+      Container(
+        color: Colors.black45, // semi-transparent overlay
+        child: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      ),])
+
     );
   }
 
@@ -212,4 +315,96 @@ class _CameraPageState extends State<CameraPage> {
     );
   }
 
+  Future <void> onStartClicked() async{
+    /*
+    if(current_word==null){
+      throw ArgumentError.notNull("current word is null");
+    }
+    */
+    await _speechController.onStartClicked(current_word, context);
+
+  }
+
+  Future<void> onStopClicked() async {
+    debugPrint("atlease we be calling the method");
+    setState(() {
+      _isLoading =true;
+    });
+   var result = await _speechController.onStopClicked(current_word, GradingLevel.Phoneme);
+    List<WordAssessment>? wordsData = result?.words;
+
+    if (wordsData != null) {
+      for (var word in wordsData) {
+        debugPrint('Word: ${word.word}');
+        for (var p in word.phonemes){
+          debugPrint('Phoneme: ${p.phoneme}, Accuracy: ${p.accuracyScore}');
+        }
+      }
+      
+      //await _speechService.playTts("æ");
+
+    } else {
+      debugPrint('No words data available');
+    }
+
+
+    double? accuracy = result?.accuracyScore;
+    setState(() {
+      _isLoading =false;
+    });
+    if(accuracy==null){
+      throw ArgumentError.notNull("result is null");
+    }
+    if (accuracy < 60) {
+      if(!canRetry()){
+        await speakAndShow("Let's try a different word!");
+        moveToNextWord();
+        return;
+      }
+      await speakAndShow("Hmm, not quite. Can you say the word again?");
+      incrementAttempt();
+    }
+    else {
+      setStar(3);
+      await speakAndShow("Great job! You said the word correctly."!);
+      setStar(0);
+      moveToNextWord();
+    }
+  }
+
+  Future<void> speakAndShow(String text) async {
+    setState(() {
+      _displayText = text;
+    });
+
+    await tts.speakAndWait(text); // your TTS service call
+
+    if (mounted) {
+      setState(() {
+        _displayText = null;
+      });
+    }
+  }
+
+  void moveToNextWord() {
+    setState(() {
+      attemptCount = 1;
+      current_word = word_generator.generate_word();
+  });
+
+  }
+
+  void incrementAttempt() {
+    setState(() {
+      attemptCount++;
+    });
+  }
+
+  void setStar(int stars){
+      setState(() {
+        _stars = stars;
+      });
+   }
+
 }
+
