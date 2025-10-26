@@ -332,16 +332,17 @@ class _CameraPageState extends State<CameraPage> {
     });
    var result = await _speechController.onStopClicked(current_word, GradingLevel.Phoneme);
     List<WordAssessment>? wordsData = result?.words;
+    String? lastPhenome;
 
     if (wordsData != null) {
       for (var word in wordsData) {
         debugPrint('Word: ${word.word}');
         for (var p in word.phonemes){
           debugPrint('Phoneme: ${p.phoneme}, Accuracy: ${p.accuracyScore}');
+          lastPhenome = p.phoneme;
         }
       }
       
-      //await _speechService.playTts("æ");
 
     } else {
       debugPrint('No words data available');
@@ -361,8 +362,12 @@ class _CameraPageState extends State<CameraPage> {
         moveToNextWord();
         return;
       }
-      await speakAndShow("Hmm, not quite. Can you say the word again?");
+      await speakAndShow("Hmm, not quite. Let's learn this word!");
       incrementAttempt();
+      if (lastPhenome != null){
+        await _speechService.playTts(lastPhenome);
+      }
+      
     }
     else {
       setStar(3);

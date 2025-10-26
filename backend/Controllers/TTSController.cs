@@ -33,25 +33,21 @@ namespace backend.Controllers
             return speechConfig;
         }
 
-        [HttpPost("speak")]
-        public async Task<IActionResult> Speak([FromForm] string text)
+        [HttpGet("speak")]
+        public async Task<IActionResult> Speak([FromQuery] string text)
         {
-            Console.WriteLine("landed in azure tts service");
-
+            Console.WriteLine($"TTS request for: {text}");
             if (string.IsNullOrWhiteSpace(text))
                 return BadRequest("Text is required.");
 
             var speechConfig = CreateSpeechConfig();
-            speechConfig.SpeechSynthesisVoiceName = "en-US-JennyNeural"; // neural voice
-            speechConfig.SetSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm);
+            speechConfig.SpeechSynthesisVoiceName = "en-US-JennyNeural";
+            speechConfig.SetSpeechSynthesisOutputFormat(
+                SpeechSynthesisOutputFormat.Audio24Khz48KBitRateMonoMp3
+            );
 
+            using var synthesizer = new SpeechSynthesizer(speechConfig, null);
 
-            // Create a pull stream to capture the audio
-            using var audioOutputStream = AudioOutputStream.CreatePullStream();
-            using var audioConfig = AudioConfig.FromStreamOutput(audioOutputStream);
-            using var synthesizer = new SpeechSynthesizer(speechConfig, audioConfig);
-
-            // Wrap text in SSML if you want IPA phonemes
             string ssml = $@"
             <speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>
                 <voice name='en-US-JennyNeural'>
@@ -68,8 +64,12 @@ namespace backend.Controllers
                 return StatusCode(500, $"TTS failed: {cancellation.Reason}, {cancellation.ErrorDetails}");
             }
 
-            // Return the audio as WAV
-            return File(result.AudioData, "audio/wav", "speech.wav");
+            Console.WriteLine($"✅ Generated TTS audio: {result.AudioData.Length} bytes");
+
+            // Return MP3 directly as streaming content
+            return File(result.AudioData, "audio/mpeg");
         }
+
+
     }
 }
