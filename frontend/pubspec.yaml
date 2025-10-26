@@ -70,13 +70,15 @@ flutter:
   uses-material-design: true
   assets:
       - assets/logo.png
-      - assets/models/mappings/class_label_map.json
-      - assets/models/mappings/label_feedback_map.json
+      - assets/models/mappings/class_label_map_O.json
+      - assets/models/mappings/class_label_map_P.json
+      - assets/models/mappings/class_label_map_A.json
+      - assets/models/mappings/label_feedback_map_O.json
+      - assets/models/mappings/label_feedback_map_A.json
+      - assets/models/mappings/label_feedback_map_P.json
       - assets/models/phoneme_models/
       - assets/avatar_player.html
-      - assets/frontend/assets/viseme-id-7.jpg
-      - assets/frontend/assets/viseme-id-9.jpg
-      - assets/frontend/assets/viseme-id-21.jpg
+  
 
 
   # To add assets to your application, add an assets section, like this:

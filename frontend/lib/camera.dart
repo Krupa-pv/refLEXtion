@@ -352,8 +352,9 @@ class _CameraPageState extends State<CameraPage> {
     } else {
       // PHONEME attempt start
       // we still use SpeechController so they produce that phoneme
-      await _speechService.playTts(lastPhoneme);
+     
       await _speechController.onStartClicked(lastPhoneme, context);
+      await _speechService.playTts("Say $lastPhoneme");
       
     }
   }
@@ -422,7 +423,7 @@ class _CameraPageState extends State<CameraPage> {
   // WORD evaluation path
   // -------------------------
   Future<void> _handleWordEvaluation(double accuracy) async {
-    if (accuracy >= 80) {
+    if (accuracy >= 90) {
       // success -> stars + next word
       setStar(3);
       await speakAndShow("Great job! You said the word correctly.");

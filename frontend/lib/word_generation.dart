@@ -2,7 +2,7 @@ import 'dart:math';
 
 class WordGeneration {
 
-  final List<String> wordSet = [ 'boot', 'bat'];
+  final List<String> wordSet = [ 'boot', 'ant', 'pig'];
 
   String generate_word(){
 

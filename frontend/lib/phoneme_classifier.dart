@@ -38,7 +38,7 @@ class PhonemeQualityModel {
 
   bool _loaded = false;
   bool get isLoaded => _loaded;
-  Map<String, String> phonemeMap = {'u': "O", 'ɑ': "A", 'p':"P"};
+  Map<String, String> phonemeMap = {'u': "O", 'æ': "A", 'p':"P"};
 
   /// load ONNX model + label maps for a specific phoneme
   ///
@@ -47,8 +47,8 @@ class PhonemeQualityModel {
     _phoneme = phonemeMap[phoneme]!;
     
     // load label maps
-    final classMapAsset = 'assets/models/mappings/class_label_map.json';
-    final feedbackMapAsset = 'assets/models/mappings/label_feedback_map.json';
+    final classMapAsset = 'assets/models/mappings/class_label_map_$_phoneme.json';
+    final feedbackMapAsset = 'assets/models/mappings/label_feedback_map_$_phoneme.json';
 
     final classJsonString = await rootBundle.loadString(classMapAsset);
     _idxToLabel = jsonDecode(classJsonString);
