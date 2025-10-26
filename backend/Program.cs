@@ -3,7 +3,7 @@ using Microsoft.Azure.Cosmos;
 using Azure;
 using Azure.AI.OpenAI;
 
-
+using backend.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +24,9 @@ builder.Services.AddSingleton(sp =>
     var keycred = new AzureKeyCredential(cfg["OpenAIKeyCred"]);
     return new AzureOpenAIClient(url, keycred);
 });
+
+builder.Services.AddSingleton<PronunciationAssess>();
+// or AddScoped<PronunciationAssess>() if you want one per request
 
 var app = builder.Build();
 

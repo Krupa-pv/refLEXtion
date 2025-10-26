@@ -57,6 +57,14 @@
               "target": "Package",
               "version": "[3.54.0, )"
             },
+            "Microsoft.CognitiveServices.Speech": {
+              "target": "Package",
+              "version": "[1.46.0, )"
+            },
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.0.10, )"
+            },
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.4, )"
