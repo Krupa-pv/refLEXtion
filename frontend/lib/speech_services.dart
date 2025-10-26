@@ -51,9 +51,9 @@ final AudioPlayer _player = AudioPlayer();
       print('🔊 Fetching TTS from: $url');
       await _player.setUrl(url); // automatically handles MP3 streaming
       await _player.play();
-      print('✅ Playing phoneme TTS!');
+      print('Playing phoneme TTS!');
     } catch (e) {
-      print('❌ Audio playback failed: $e');
+      print('Audio playback failed: $e');
     }
   }
 

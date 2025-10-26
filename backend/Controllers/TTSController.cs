@@ -66,7 +66,7 @@ namespace backend.Controllers
                 return StatusCode(500, $"TTS failed: {cancellation.Reason}, {cancellation.ErrorDetails}");
             }
 
-            Console.WriteLine($"✅ Generated TTS audio: {result.AudioData.Length} bytes");
+            Console.WriteLine($" Generated TTS audio: {result.AudioData.Length} bytes");
 
             // Return MP3 directly as streaming content
             return File(result.AudioData, "audio/mpeg");
