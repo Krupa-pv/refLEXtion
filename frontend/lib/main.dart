@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/camera.dart';
 import 'package:frontend/test.dart';
+import 'avatarcustomizationpage.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -79,8 +81,35 @@ Widget build(BuildContext context) {
             width: 300,
             height: 300,
           ),
-          const SizedBox(height: 20), // spacing between logo and button
-          
+          const SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              debugPrint("avatar creation!");
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AvatarCustomizationPage(
+                    onAvatarCreated: (url) {
+                      print("Avatar URL: $url");
+                      // save to backend / user profile
+                    },
+                  ),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+              textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              backgroundColor: Colors.deepPurple,
+              foregroundColor: Colors.deepPurple[50]
+            ),
+            child: const Text("Create your refLEXion!"),
+          ),
+           // spacing between logo and button
+          const SizedBox(height: 20), 
           // Main button
           ElevatedButton(
             onPressed: () {
@@ -99,7 +128,7 @@ Widget build(BuildContext context) {
               backgroundColor: Colors.deepPurple,
               foregroundColor: Colors.deepPurple[50]
             ),
-            child: const Text("Let's Reflect!"),
+            child: const Text("Let's refLEX!"),
           ),
         ],
       ),
