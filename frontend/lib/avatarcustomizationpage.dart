@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'tts.dart';
+import 'avatardata.dart';
 
 
 class AvatarCustomizationPage extends StatefulWidget {
@@ -60,6 +61,7 @@ class _AvatarCustomizationPageState extends State<AvatarCustomizationPage> {
     final data = await Clipboard.getData('text/plain');
     if (data != null && data.text != null){
       debugPrint(data.text);
+      AvatarData.glbUrl = data.text;
       Navigator.pop(context);
     }
     else{

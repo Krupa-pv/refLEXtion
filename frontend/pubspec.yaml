@@ -73,6 +73,7 @@ flutter:
       - assets/models/mappings/class_label_map.json
       - assets/models/mappings/label_feedback_map.json
       - assets/models/phoneme_models/
+      - assets/avatar_player.html
 
   # To add assets to your application, add an assets section, like this:
   # assets:

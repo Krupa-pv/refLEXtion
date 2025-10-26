@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/camera.dart';
+import 'package:frontend/avatarplayerpage.dart';
 import 'package:frontend/test.dart';
 import 'avatarcustomizationpage.dart';
 
@@ -130,6 +131,31 @@ Widget build(BuildContext context) {
             ),
             child: const Text("Let's refLEX!"),
           ),
+
+          //const SizedBox(height: 20),
+/*
+          ElevatedButton(
+            onPressed: () {
+              debugPrint("Let's Reflect button pressed!");
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AvatarPlayerPage()),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+              textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              backgroundColor: Colors.deepPurple,
+              foregroundColor: Colors.deepPurple[50]
+            ),
+            child: const Text("Let's test!"),
+          ),*/
+
+
+
         ],
       ),
     ),
