@@ -1,0 +1,33 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+.pub/
+build/
+flutter_*.png
+*.flutter-plugins
+*.flutter-plugins-dependencies
+*.iml
+
+# macOS
+.DS_Store
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/
+
+# Android
+android/.gradle/
+android/local.properties
+
+# Linux / Windows / macOS Flutter
+linux/flutter/ephemeral/
+macos/Flutter/ephemeral/
+windows/flutter/ephemeral/
+
+# .NET backen
+backend/bin/
+backend/obj/
+
+#secrets file
+secrets.json

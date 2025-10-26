@@ -1730,19 +1730,19 @@
     ]
   },
   "packageFolders": {
-    "/Users/menakawijeratne/.nuget/packages/": {}
+    "/Users/krupavenkatesan/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/menakawijeratne/Documents/refLEXtion/backend/backend.csproj",
+      "projectUniqueName": "/Users/krupavenkatesan/hackohio/backend/backend.csproj",
       "projectName": "backend",
-      "projectPath": "/Users/menakawijeratne/Documents/refLEXtion/backend/backend.csproj",
-      "packagesPath": "/Users/menakawijeratne/.nuget/packages/",
-      "outputPath": "/Users/menakawijeratne/Documents/refLEXtion/backend/obj/",
+      "projectPath": "/Users/krupavenkatesan/hackohio/backend/backend.csproj",
+      "packagesPath": "/Users/krupavenkatesan/.nuget/packages/",
+      "outputPath": "/Users/krupavenkatesan/hackohio/backend/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/Users/menakawijeratne/.nuget/NuGet/NuGet.Config"
+        "/Users/krupavenkatesan/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
@@ -1765,7 +1765,7 @@
       "restoreAuditProperties": {
         "enableAudit": "true",
         "auditLevel": "low",
-        "auditMode": "all"
+        "auditMode": "direct"
       },
       "SdkAnalysisLevel": "9.0.100"
     },
@@ -1813,7 +1813,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.100/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.101/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
